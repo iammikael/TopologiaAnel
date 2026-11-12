@@ -1,11 +1,14 @@
 #include <stdio.h>
-#include <mpi.h> //importando bibioteca mpi que iremos usar
+#include <mpi.h> //importando biblioteca mpi que iremos usar
 
 int main(int argc, char *argv[]){
 
     // variavel rank responsavel por identificar cada processo
     int rank; 
     int tamanho;
+    int opcao = -1;
+    int x;
+    int y;
 
     MPI_Group grupo_original;
     MPI_Group novo_grupo;
@@ -33,94 +36,151 @@ int main(int argc, char *argv[]){
         MPI_Group_incl(grupo_original, 4, ranks2, &novo_grupo);
     }
 
-    
+    //Criacao de um comunicador para cada grupo de processo
     MPI_Comm_create(MPI_COMM_WORLD, novo_grupo, &novo_comunicador);
 
     MPI_Comm_rank(novo_comunicador, &rank_comunicador);
 
     MPI_Group_rank(novo_grupo, &rank_grupo);
 
-    printf("Rank global: %d - Rank no grupo: %d - rank comunicador: %d\n", rank, rank_grupo, rank_comunicador);
-
-
-    if(rank < 4){
-        int valor =10;
-            if(rank_comunicador == 0){
-                MPI_Send(&valor, 1, MPI_INT, 1, 0, novo_comunicador);
-                printf("Processo 0 enviou %d para P1\n", valor);
-
-                MPI_Recv(&valor, 1, MPI_INT, 3, 0,novo_comunicador,MPI_STATUS_IGNORE);
-                printf("Processo 0 recebeu o valor final do anel: %d \n", valor);
-
-                int antiHorario;
-
-                MPI_Recv(&antiHorario,1,MPI_INT, 4,10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-                printf("\n-- Resultado dos aneis --\n");
-                printf("Anel horario %d\n",valor);
-                printf("Anel anti-horario %d\n",antiHorario);
-
-            }else if(rank_comunicador == 1){
-                MPI_Recv(&valor, 1, MPI_INT, 0, 0,novo_comunicador,MPI_STATUS_IGNORE);
-                valor = valor + 1;
-
-                printf("Processo 1 recebeu e incrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 2,0,novo_comunicador);
-
-            }else if(rank_comunicador == 2){
-                MPI_Recv(&valor,1,MPI_INT, 1, 0, novo_comunicador, MPI_STATUS_IGNORE);
-                valor = valor + 1;
-
-                printf("Processo 2 recebeu e incrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 3,0,novo_comunicador);
-
-            }else if(rank_comunicador == 3){
-                MPI_Recv(&valor,1,MPI_INT, 2, 0,novo_comunicador, MPI_STATUS_IGNORE);
-                valor = valor + 1;
-
-                printf("Processo 3 recebeu e incrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 0,0,novo_comunicador);
-            }
+    if(rank == 0){
+        printf("\nInforme o valor inicial de x:");
+        fflush(stdout);
+        scanf("%d",&x);
+        
+        printf("\nInforme o valor inicial de y:");
+        fflush(stdout);
+        scanf("%d",&y);
+        printf("\n");
     }
 
-    if(rank >= 4){
-        int valor =20;
+    MPI_Bcast(&x,1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&y,1, MPI_INT, 0, MPI_COMM_WORLD);
 
-            //Aqui iniciamos o processo P4 no rank local 0
-            if(rank_comunicador == 0){
-                MPI_Send(&valor, 1, MPI_INT, 3, 0, novo_comunicador);
-                printf("Processo 0 enviou %d para P7\n", valor);
+    while(opcao !=3){
+            //inicio do anel do sentido horario
+            if(rank < 4){
+                int valor = x;
+                    if(rank_comunicador == 0){
+                        MPI_Send(&valor, 1, MPI_INT, 1, 0, novo_comunicador);
+                        printf("Processo 0 enviou %d para P1\n", valor);
 
-                MPI_Recv(&valor, 1, MPI_INT, 1, 0,novo_comunicador,MPI_STATUS_IGNORE);
-                printf("Processo p4 recebeu o valor final do anel: %d \n", valor);
+                        MPI_Recv(&valor, 1, MPI_INT, 3, 0,novo_comunicador,MPI_STATUS_IGNORE);
+                        printf("Processo 0 recebeu o valor final do anel: %d \n", valor);
 
-                MPI_Send(&valor,1,MPI_INT, 0, 10,MPI_COMM_WORLD);
+                        x = valor;
 
-            //processo P3 no rank local 3
-            }else if(rank_comunicador == 3){
-                MPI_Recv(&valor, 1, MPI_INT, 0, 0,novo_comunicador,MPI_STATUS_IGNORE);
-                valor = valor - 1;
+                        int antiHorario;
 
-                printf("Processo p7 recebeu e decrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 2,0,novo_comunicador);
+                        MPI_Recv(&antiHorario,1,MPI_INT, 4,10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            //processo P4 no rank local 4
-            }else if(rank_comunicador == 2){
-                MPI_Recv(&valor,1,MPI_INT, 3, 0, novo_comunicador, MPI_STATUS_IGNORE);
-                valor = valor - 1;
+                        printf("\n-- Resultado dos aneis --\n");
+                        printf("Anel horario %d\n",valor);
+                        printf("Anel anti-horario %d\n",antiHorario);
 
-                printf("Processo p6 recebeu e decrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 1,0,novo_comunicador);
+                    }else if(rank_comunicador == 1){
+                        MPI_Recv(&valor, 1, MPI_INT, 0, 0,novo_comunicador,MPI_STATUS_IGNORE);
+                        valor = valor + 1;
 
-            //processo P5 no rank local 5
-            }else if(rank_comunicador == 1){
-                MPI_Recv(&valor,1,MPI_INT, 2, 0,novo_comunicador, MPI_STATUS_IGNORE);
-                valor = valor - 1;
+                        printf("Processo 1 recebeu e incrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 2,0,novo_comunicador);
 
-                printf("Processo p5 recebeu e decrementou o valor para %d\n",valor);
-                MPI_Send(&valor,1, MPI_INT, 0,0,novo_comunicador);
+                    }else if(rank_comunicador == 2){
+                        MPI_Recv(&valor,1,MPI_INT, 1, 0, novo_comunicador, MPI_STATUS_IGNORE);
+                        valor = valor + 1;
+
+                        printf("Processo 2 recebeu e incrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 3,0,novo_comunicador);
+
+                    }else if(rank_comunicador == 3){
+                        MPI_Recv(&valor,1,MPI_INT, 2, 0,novo_comunicador, MPI_STATUS_IGNORE);
+                        valor = valor + 1;
+
+                        printf("Processo 3 recebeu e incrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 0,0,novo_comunicador);
+                    }
             }
+
+            //inicio do anel do sentido anti-horario
+            if(rank >= 4){
+                int valor =y;
+
+                    //Aqui iniciamos o processo P4 no rank local 0
+                    if(rank_comunicador == 0){
+                        MPI_Send(&valor, 1, MPI_INT, 3, 0, novo_comunicador);
+                        printf("Processo 4 enviou %d para P7\n", valor);
+
+                        MPI_Recv(&valor, 1, MPI_INT, 1, 0,novo_comunicador,MPI_STATUS_IGNORE);
+                        printf("Processo 4 recebeu o valor final do anel: %d \n", valor);
+
+                        y = valor;
+
+                        MPI_Send(&valor,1,MPI_INT, 0, 10,MPI_COMM_WORLD);
+
+                    //processo P7 no rank local 3
+                    }else if(rank_comunicador == 3){
+                        MPI_Recv(&valor, 1, MPI_INT, 0, 0,novo_comunicador,MPI_STATUS_IGNORE);
+                        valor = valor - 1;
+
+                        printf("Processo 7 recebeu e decrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 2,0,novo_comunicador);
+
+                    //processo P6 no rank local 2
+                    }else if(rank_comunicador == 2){
+                        MPI_Recv(&valor,1,MPI_INT, 3, 0, novo_comunicador, MPI_STATUS_IGNORE);
+                        valor = valor - 1;
+
+                        printf("Processo 6 recebeu e decrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 1,0,novo_comunicador);
+
+                    //processo P5 no rank local 1
+                    }else if(rank_comunicador == 1){
+                        MPI_Recv(&valor,1,MPI_INT, 2, 0,novo_comunicador, MPI_STATUS_IGNORE);
+                        valor = valor - 1;
+
+                        printf("Processo 5 recebeu e decrementou o valor para %d\n",valor);
+                        MPI_Send(&valor,1, MPI_INT, 0,0,novo_comunicador);
+                    }
+            }
+        
+
+                if(rank == 0){
+                    printf("\n----MENU----\n");
+                    printf("1 - Continuar a comunicao \n");
+                    printf("2 - Informar novos valores\n");
+                    printf("3 - Encerrar\n");
+
+                    printf("\nEscolha uma opcao -> ");
+                    fflush(stdout);
+                    scanf("%d",&opcao);
+
+                
+                }
+
+                //Usando o MPI Bcast eu envio para todos os processos a opcao
+                // que o usuario escolheu
+                MPI_Bcast(&opcao, 1, MPI_INT,0, MPI_COMM_WORLD);
+
+                if(opcao == 2){
+                    if(rank == 0){
+                        printf("Informe o valor inicial de x:");
+                        fflush(stdout);
+                        scanf("%d",&x);
+                        
+                        printf("Informe o valor inicial de y:");
+                        fflush(stdout);
+                        scanf("%d",&y);
+                    }
+
+                    //Aqui eu usei o MPI Bcast para poder compartilhar com todos os processos
+                    //os valores escolhidos pelo usuario
+                    MPI_Bcast(&x,1, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(&y,1, MPI_INT, 0, MPI_COMM_WORLD);
+                }
+
     }
+
+    printf("Processo %d recebeu a opcao %d\n", rank,opcao);
 
     MPI_Comm_free(&novo_comunicador);
 
