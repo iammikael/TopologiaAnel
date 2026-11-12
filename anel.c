@@ -1,5 +1,11 @@
+//Trabalho de sistema distribuidos - Topologia em anel 
+//Nomes: Mikael Bueno e Mayla Escurra 
+// Nesse trabalho para compilar usei o seguinte comando no terminal linux -> mpicc anel.c -o anel
+//E para executar -> mpirun -np 8 ./anel
+
+
 #include <stdio.h>
-#include <mpi.h> //importando biblioteca mpi que iremos usar
+#include <mpi.h> //importando bibioteca mpi que iremos usar
 
 int main(int argc, char *argv[]){
 
